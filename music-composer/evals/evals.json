@@ -1,0 +1,195 @@
+{
+  "skill_name": "music-composer",
+  "notes": "Prompts 1-10 are the required scenarios; 11-14 cover preservation, genre styling and DAW safety. 'objective' assertions can be graded from the transcript or checked with scripts/mc.py; 'subjective' ones need a human listening pass (import the generated MIDI and play it). Passing objective checks does not prove musical quality.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "jazzy-dnb-4-bar-progression",
+      "prompt": "Write a dark, jazzy four-bar chord progression for a liquid drum and bass tune at 174. One chord per bar, Rhodes plus a sub bass.",
+      "expected_output": "Four extended-minor-leaning chords suited to liquid DnB, each with a rootless Rhodes voicing (names + octaves + MIDI) and a sub-bass note, short why-it-works, offer to write MIDI/clip.",
+      "files": [],
+      "assertions": [
+        {"text": "Gives exactly four chords, one per bar", "type": "objective"},
+        {"text": "Every chord has a voicing with note names AND MIDI numbers", "type": "objective"},
+        {"text": "Every voicing's notes belong to its stated chord and include its 3rd and 7th (verify with mc.py check)", "type": "objective"},
+        {"text": "Keys voicings sit at or above MIDI 48 and the bass notes are in the sub range (MIDI 24-43)", "type": "objective"},
+        {"text": "States the octave convention (C3 = 60) once", "type": "objective"},
+        {"text": "Explanation is brief (no unrequested theory lecture)", "type": "subjective"},
+        {"text": "Sounds dark and jazzy and fits liquid DnB when played back", "type": "subjective-listening"}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "rhodes-voicings",
+      "prompt": "I've got Dm9 G13 Cmaj9 A7b13. Give me practical Rhodes voicings I can actually play, there's a bassline already.",
+      "expected_output": "Rootless one-hand (or clearly split) Rhodes voicings with smooth voice leading, MIDI numbers, and hand-split info.",
+      "files": [],
+      "assertions": [
+        {"text": "Voicings are rootless or explain why the root is included", "type": "objective"},
+        {"text": "Each voicing has 3-5 notes and spans 12 semitones or less, or says how to split it between hands", "type": "objective"},
+        {"text": "All voicings validate against their chord symbols", "type": "objective"},
+        {"text": "Adjacent voicings share or step-move notes (reports held notes / movement)", "type": "objective"},
+        {"text": "Lowest voicing note is at or above MIDI 50", "type": "objective"}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "harmonize-bassline",
+      "prompt": "What chords work with my bassline? It's F1 for three beats then A1 on beat 4, Bb1 for three beats then E1, Eb1 for a whole bar, Ab1 for a whole bar. Loops every 4 bars. Ableton octave names.",
+      "expected_output": "Recognises A1 and E1 as approach notes, harmonises the downbeats (F, Bb, Eb, Ab), offers 2-3 options with different intents, voiced and validated against the bass.",
+      "files": [],
+      "assertions": [
+        {"text": "Treats A1 and E1 as approach/passing notes rather than harmonising them as chord roots", "type": "objective"},
+        {"text": "Each option's chords contain the downbeat bass note (as root or a named inversion/colour)", "type": "objective"},
+        {"text": "Offers 2-3 options whose musical intents differ and are named", "type": "objective"},
+        {"text": "Provides voicings with MIDI numbers for at least the recommended option", "type": "objective"},
+        {"text": "Does not change the user's bassline", "type": "objective"}
+      ]
+    },
+    {
+      "id": 4,
+      "name": "identify-from-midi",
+      "prompt": "What chords are these? Bar 1: 41 56 60 63 67. Bar 2: 46 56 60 61 65. Bar 3: 39 55 60 61 65. Bar 4: 44 58 60 63 67.",
+      "expected_output": "Fm9, Bbm9, Eb13, Abmaj9 (lowest notes as bass), with notes/degrees and the key context (F minor / Ab major).",
+      "files": [],
+      "assertions": [
+        {"text": "Names bar 1 as Fm9", "type": "objective"},
+        {"text": "Names bar 2 as Bbm9", "type": "objective"},
+        {"text": "Names bar 3 as Eb13", "type": "objective"},
+        {"text": "Names bar 4 as Abmaj9", "type": "objective"},
+        {"text": "Mentions the key is F minor / Ab major (or notes the ambiguity)", "type": "objective"}
+      ]
+    },
+    {
+      "id": 5,
+      "name": "three-reharmonizations",
+      "prompt": "Give me three alternative ways to reharmonise Cmaj7 Am7 Dm7 G7. The top melody notes are G, C, F, F (one per bar) and must stay.",
+      "expected_output": "Three options with distinct intents (e.g. richer diatonic, functional/tritone, borrowed/darker), each keeping the melody notes compatible, voiced and explained briefly.",
+      "files": [],
+      "assertions": [
+        {"text": "Exactly three options, each labelled with its intent or technique", "type": "objective"},
+        {"text": "The three options differ in technique, not just in added extensions", "type": "objective"},
+        {"text": "In every option each melody note is a chord tone or available tension of its chord (mc.py validate --role melody shows no flags)", "type": "objective"},
+        {"text": "Voicings keep the melody note as the top voice", "type": "objective"},
+        {"text": "At least one option keeps bar 1 as some form of C major chord", "type": "subjective"}
+      ]
+    },
+    {
+      "id": 6,
+      "name": "explain-to-non-theory-person",
+      "prompt": "Why does Cmaj7 to Fm7 back to Cmaj7 sound so bittersweet? I don't know theory, explain it simply.",
+      "expected_output": "Plain-language explanation: Fm7 is borrowed from C minor; A and E drop to Ab and Eb; the semitone drop creates the sigh; names modal interchange after the explanation.",
+      "files": [],
+      "assertions": [
+        {"text": "Names the specific notes that change (A to Ab, and the Eb)", "type": "objective"},
+        {"text": "Describes the effect in sound terms before or alongside the theory term", "type": "objective"},
+        {"text": "Any jargon used (modal interchange, borrowed chord, parallel minor) is defined in plain words", "type": "objective"},
+        {"text": "Gives the actual notes or MIDI numbers so the user can try it", "type": "objective"},
+        {"text": "Length is proportionate (not a full lesson)", "type": "subjective"}
+      ]
+    },
+    {
+      "id": 7,
+      "name": "melody-over-harmony",
+      "prompt": "Write a 4-bar melody for a Rhodes or flute over Fm9 Bbm9 Eb13 Abmaj9 (one bar each) at 172. Something singable with a motif.",
+      "expected_output": "A motif-based melody with rhythm in beats, note names + MIDI, strong beats on chord tones/tensions, validated, one-line description of its shape.",
+      "files": [],
+      "assertions": [
+        {"text": "Melody given as a note list with start times/durations in beats and MIDI numbers", "type": "objective"},
+        {"text": "Has an identifiable motif that is repeated or varied (not a random scale walk)", "type": "objective"},
+        {"text": "At least 70% of strong-beat notes are chord tones or tensions (mc.py validate --role melody)", "type": "objective"},
+        {"text": "Range is within about an octave and a half", "type": "objective"},
+        {"text": "Is singable and fits the chords when played", "type": "subjective-listening"}
+      ]
+    },
+    {
+      "id": 8,
+      "name": "midi-compatible-output",
+      "prompt": "Give me Cm9 Fm9 Abmaj7 G7alt as pad chords, two bars each, in a format I can paste into a MIDI tool or drop into Ableton.",
+      "expected_output": "Note list with pitch/start_time/duration/velocity in beats (and/or .mid files), verified, 32 beats total.",
+      "files": [],
+      "assertions": [
+        {"text": "Provides structured note data (pitch, start time, duration, velocity) or .mid file(s)", "type": "objective"},
+        {"text": "All pitches are integers 0-127 and durations are positive", "type": "objective"},
+        {"text": "Chords start at beats 0, 8, 16, 24 and last 8 beats", "type": "objective"},
+        {"text": "Each chord's pitches validate against its symbol", "type": "objective"},
+        {"text": "States the octave/pitch convention", "type": "objective"}
+      ]
+    },
+    {
+      "id": 9,
+      "name": "ambiguous-harmony",
+      "prompt": "My chord stab is Ab C Eb G. Is that Abmaj7 or something else? The bass is moving underneath.",
+      "expected_output": "Explains it is Abmaj7 or a rootless Fm9 (also C-based readings possible) depending on the bass; shows what each bass note does.",
+      "files": [],
+      "assertions": [
+        {"text": "Mentions both Abmaj7 and Fm9 (rootless) readings", "type": "objective"},
+        {"text": "Explains that the bass note decides which one is heard", "type": "objective"},
+        {"text": "Does not assert a single answer as definitive", "type": "objective"}
+      ]
+    },
+    {
+      "id": 10,
+      "name": "no-mcp-installed",
+      "prompt": "Write me a deep house m9 stab loop in A minor and put it straight into Ableton.",
+      "expected_output": "With no Ableton MCP available: one-line limitation, then .mid file(s) and the note table; does not claim to have written to Live.",
+      "files": [],
+      "assertions": [
+        {"text": "Checks for an Ableton MCP and states plainly that none is available", "type": "objective"},
+        {"text": "Delivers the idea as .mid file(s) and/or a note table instead", "type": "objective"},
+        {"text": "Does not claim to have written anything into Ableton", "type": "objective"},
+        {"text": "The stab voicings validate and use a short-note rhythm", "type": "objective"}
+      ]
+    },
+    {
+      "id": 11,
+      "name": "preserve-user-intent",
+      "prompt": "From Fm9 Bbm9 Eb13 Abmaj9: I like the first two chords, but not the last two. Give me alternatives for bars 3 and 4.",
+      "expected_output": "Bars 1-2 unchanged (same voicings); 2-3 alternatives for bars 3-4 with different intents.",
+      "files": [],
+      "assertions": [
+        {"text": "Bars 1 and 2 keep the same chords and the same voicings as before", "type": "objective"},
+        {"text": "Offers alternatives for bars 3-4 only", "type": "objective"},
+        {"text": "Alternatives are voice-led from bar 2 and back into bar 1 (loop)", "type": "objective"}
+      ]
+    },
+    {
+      "id": 12,
+      "name": "late-90s-atmospheric",
+      "prompt": "Make Am7 Dm7 G7 Cmaj7 sound more like late-90s atmospheric drum and bass.",
+      "expected_output": "Moves away from the functional ii-V feel toward m9/maj9 planing, lydian colour, pedal points, slower harmonic rhythm, pads; explains briefly.",
+      "files": [],
+      "assertions": [
+        {"text": "Uses at least one of: planing/constant structure, lydian maj7#11, sus chords, pedal point, slower harmonic rhythm", "type": "objective"},
+        {"text": "Gives pad/Rhodes voicings with MIDI numbers", "type": "objective"},
+        {"text": "Explains the change in one or two lines of sound-terms", "type": "subjective"}
+      ]
+    },
+    {
+      "id": 13,
+      "name": "mcp-no-overwrite",
+      "prompt": "[With an Ableton MCP connected and an existing chord clip on track 2, slot 1] Make a more soulful variation of the chords on track 2.",
+      "expected_output": "Reads the clip, analyses it, writes the variation to a NEW empty slot, names it, verifies by reading back; original untouched.",
+      "files": [],
+      "assertions": [
+        {"text": "Reads the existing clip's notes before proposing changes", "type": "objective"},
+        {"text": "Writes to an empty slot or new track, never the original clip", "type": "objective"},
+        {"text": "Names the new clip and tells the user where it is", "type": "objective"},
+        {"text": "Reads the new clip back and validates it", "type": "objective"},
+        {"text": "Does not use the server's generator tools to replace musical decisions", "type": "objective"}
+      ]
+    },
+    {
+      "id": 14,
+      "name": "simplicity-when-appropriate",
+      "prompt": "The chords in my neurofunk drop are clashing with the reese. Fm11 Gbmaj9#11 Ebm11 Dbmaj9. Help.",
+      "expected_output": "Recommends simplifying (shells/triads/fewer notes, higher register, slower changes) rather than adding complexity; verified voicings.",
+      "files": [],
+      "assertions": [
+        {"text": "Recommends reducing density or extensions and/or moving the voicings up", "type": "objective"},
+        {"text": "Does not add more extensions", "type": "objective"},
+        {"text": "Gives concrete voicings with MIDI numbers above the bass register", "type": "objective"}
+      ]
+    }
+  ]
+}

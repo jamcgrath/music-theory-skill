@@ -32,12 +32,22 @@ music-composer/                 <- the skill (this folder is what gets installed
 
 ## Install
 
-Requires Python 3 on the machine where Claude runs the skill. No packages to install.
+Requires Python 3.9+ on the machine where Claude runs the skill. No packages to install.
+
+Get the files:
+```bash
+git clone https://github.com/jamcgrath/music-theory-skill.git
+cd music-theory-skill
+```
 
 **Claude Code, personal (all projects)**
 ```bash
 mkdir -p ~/.claude/skills
 cp -r music-composer ~/.claude/skills/
+```
+To work on the skill, symlink it instead so edits in the clone are live without re-copying:
+```bash
+ln -s "$PWD/music-composer" ~/.claude/skills/music-composer
 ```
 **Claude Code, one project**: copy `music-composer/` into the project's `.claude/skills/`.
 

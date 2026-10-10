@@ -316,6 +316,43 @@ class Regressions(unittest.TestCase):
             self.assertEqual(len(out["clip"]["tracks"]), 1)  # the user's bass isn't duplicated
             self.assertTrue(all(v["midi"][0] - v["bass_midi"] >= 12 for v in out["voicings"]))
 
+    def test_no_root_over_major_seventh(self):
+        prog = [parse_chord(s) for s in "Cmaj7 Fmaj7 Abmaj7 Gmaj9#11".split()]
+        for style in STYLES:
+            for kw in ({}, {"include_root": True}, {"include_root": True, "bass_bottom": True}):  # last = --no-bass
+                for ch, v in zip(prog, voice_progression(prog, style, **kw)):
+                    sevens = [m for m in v if ch.tone_for_pc(m % 12).label == "7"]
+                    roots = [m for m in v if ch.tone_for_pc(m % 12).label == "1"]
+                    self.assertFalse(any(r - s in (1, 13) for s in sevens for r in roots), (style, ch.name(), v))
+
+    def test_top_line_may_pin_root_over_major_seventh(self):
+        warn = []
+        vs = voice_progression([parse_chord("Cmaj7"), parse_chord("Am7")], "rhodes", top_line=[72, None], warnings=warn)
+        self.assertEqual(vs[0][-1], 72)
+        self.assertEqual(warn, [])
+
+    def test_identify_spells_notes_for_the_chord(self):
+        self.assertIn("F#4(78)", self.run_mc("identify", "C3", "E3", "G3", "B3", "D4", "F#4").stdout)
+        self.assertIn("C#3(61)", self.run_mc("identify", "A2", "C#3", "E3", "G3").stdout)
+
+    def test_no_bass_has_no_bassline_warning(self):
+        out = self.run_mc("voice", "Cmaj7 Am7 Dm7 G7", "--style", "piano", "--no-bass").stdout
+        self.assertNotIn("bassline", out)
+
+    def test_cadence_decides_the_key(self):
+        out = self.run_mc("analyze", "Dm7 G7 Cmaj7 Db7 Cmaj7").stdout
+        self.assertTrue(out.startswith("key: C major"))
+        self.assertNotIn("ambiguous", out)
+
+    def test_non_chord_tone_not_labelled_as_chord_degree(self):
+        with tempfile.TemporaryDirectory() as d:
+            bass = [{"pitch": 29, "start_time": 0, "duration": 3}, {"pitch": 33, "start_time": 3, "duration": 1},
+                    {"pitch": 34, "start_time": 4, "duration": 4}]
+            out = json.loads(self.run_mc("--json", "validate", self.write(d, "b.json", bass),
+                                         "--role", "bass", "--chords", "Fm9 Bbm9").stdout)
+            a_nat = next(x for x in out["report"] if x.get("pitch") == 33)
+            self.assertEqual(a_nat["label"], "natural 3")
+
 
 if __name__ == "__main__":
     unittest.main()

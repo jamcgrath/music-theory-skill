@@ -24,7 +24,7 @@ music-composer/                 <- the skill (this folder is what gets installed
 │   ├── mc.py                   CLI (stdlib only, Python 3.9+)
 │   ├── theory_core.py          spelling, identification, voicing search, analysis
 │   ├── midi_io.py              Standard MIDI File read/write
-│   └── tests/test_theory.py    38 unit tests
+│   └── tests/test_theory.py    44 unit tests
 └── evals/
     ├── evals.json              14 behaviour scenarios with graded assertions
     └── check_toolchain.py      38 executable checks behind those scenarios
@@ -51,6 +51,10 @@ python3 ~/.claude/skills/music-composer/scripts/mc.py voice "Fm9 Bbm9 Eb13 Abmaj
 python3 -m unittest discover -s ~/.claude/skills/music-composer/scripts/tests
 python3 ~/.claude/skills/music-composer/evals/check_toolchain.py
 ```
+
+## Editing
+
+`music-composer/` is the source. After changing it, run `./build.sh` to rebuild `music-composer.skill` and `music-composer-skill.zip` together so they can't drift apart.
 
 ## Connecting an existing Ableton MCP
 
@@ -97,7 +101,7 @@ Safety: the skill never overwrites or edits existing clips without your explicit
 
 ## Testing and evaluation
 
-- `scripts/tests/test_theory.py` — 38 unit tests: note/octave conventions, spelling and enharmonics, chord-symbol aliases, identity rules (e.g. no natural 11 in C13), identification and ambiguity, every voicing of 8 progressions × 6 styles validates and respects register/low-interval limits, voice leading beats naive block chords, top-line pinning, analysis (secondary dominants, tritone subs, borrowed chords, key guess), MIDI round trip, MCP JSON shapes, CLI exit codes, plus regressions for pushed chords, notes held across chord changes, MCP reply wrappers, 11th-chord voicings, #9 placement, user-supplied basslines and per-bar rhythm patterns.
+- `scripts/tests/test_theory.py` — 44 unit tests: note/octave conventions, spelling and enharmonics, chord-symbol aliases, identity rules (e.g. no natural 11 in C13), identification and ambiguity, every voicing of 8 progressions × 6 styles validates and respects register/low-interval limits, voice leading beats naive block chords, top-line pinning, analysis (secondary dominants, tritone subs, borrowed chords, key guess), MIDI round trip, MCP JSON shapes, CLI exit codes, plus regressions for pushed chords, notes held across chord changes, MCP reply wrappers, 11th-chord voicings, #9 placement, user-supplied basslines, per-bar rhythm patterns, maj7 voicings that keep the root off the 7th, chord-aware note spelling in `identify`, cadence-weighted key guessing, and non-chord-tone labels.
 - `evals/check_toolchain.py` — 38 checks mapped to the 10 required scenarios (progression generation, Rhodes voicings, bassline harmonisation, identification, three reharmonisations under a melody constraint, plain-language explanation inputs, melody validation, MIDI output, ambiguity, no-MCP delivery).
 - `evals/evals.json` — 14 behaviour scenarios with assertions for grading Claude's actual responses (usable with the skill-creator eval loop). Assertions are typed `objective`, `subjective` or `subjective-listening`.
 

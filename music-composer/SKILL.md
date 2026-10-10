@@ -22,6 +22,7 @@ A composition partner for a producer who hears what they want but may not know t
 - **MIDI numbers are the ground truth.** Names use Ableton's octave naming by default: **C3 = MIDI 60** (what the Live piano roll shows). Scientific pitch (C4 = 60) only on request (`--spn`). State the convention once when you first show notes.
 - **Chord identity ≠ voicing.** `Fm9` defines the pitch classes (F Ab C Eb G). A voicing is which of those notes, in which octaves. The voicer never adds tones the symbol doesn't contain — to add colour, change the symbol (`Fm7` → `Fm9`) and say so.
 - **Rootless by default when a bass part exists.** Keys/pads leave the root to the bass; the script includes it automatically when there is no bass (`--no-bass`).
+- **Working files** (clip reads, read-backs, drafted parts) go in a temp dir such as `/tmp/mc/`, not the user's project. Only deliverables (`.mid` files) go where the user wants them.
 - Chord symbol grammar the script accepts: `Cmaj7 CΔ7 Cm9 C-7 Cm7b5 Cø C°7 C7alt C13#11 C7(b9,#11) C9sus4 C6/9 Cm(maj7) Cadd9 Dm9/G`. Progressions: space- or `|`-separated, `Chord:beats` for durations, `%` repeats.
 
 ## Workflow
@@ -61,7 +62,7 @@ Run as `python3 ${CLAUDE_SKILL_DIR}/scripts/mc.py <command>` (add `--json` befor
 | Voice over the user's bassline | `voice "…" --bass-file bass.json` (uses their bass, spaces chords above it) |
 | MIDI files | `midi-read in.mid --out clip.json`, `midi-write clip.json out.mid --split` |
 
-Styles: `rhodes` (4 voices, rootless, window D2–G4, usually ~G2–G3), `piano` (5, two hands), `pad` (4, open/wide), `stab` (3, tight, mid), `organ` (4, close, includes root), `pluck` (3, higher). Bass defaults to sub register E0–G1 (MIDI 28–43); use `--bass-range` for a mid bass.
+Styles: `rhodes` (3–4 voices — 3 on a plain 7th chord, since it's rootless and adds nothing — window D2–G4, usually ~G2–G3), `piano` (5, two hands), `pad` (4, open/wide), `stab` (3, tight, mid), `organ` (4, close, includes root), `pluck` (3, higher). Bass defaults to sub register E0–G1 (MIDI 28–43); use `--bass-range` for a mid bass.
 
 ## Response format (progressions)
 
@@ -78,7 +79,7 @@ Then one short line on what you can do next (variation, melody, write it to Live
 
 ## Reading existing material
 
-From the user (notes, MIDI numbers, a `.mid`) or from Ableton (via MCP, saved to a JSON file): run `notes <file>`, then reason about the result. When readings are ambiguous (`identify`/`analyze` say so), present the two most plausible and say what decides between them — usually the bass note or which chord feels like home. Never silently pick one.
+From the user (notes, MIDI numbers, a `.mid`) or from Ableton (via MCP, saved to a JSON file in the temp dir): run `notes <file>`, then reason about the result. When readings are ambiguous (`identify`/`analyze` say so), present the two most plausible and say what decides between them — usually the bass note or which chord feels like home. Never silently pick one.
 
 ## Reference map — read only what the request needs
 

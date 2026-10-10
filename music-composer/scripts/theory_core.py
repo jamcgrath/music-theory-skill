@@ -645,7 +645,9 @@ def select_tones(ch: Chord, voices: int, include_root: bool, allow_double: bool,
     if allow_double and len(chosen) < voices:
         root = next(t for t in ch.tones if t.role == "root")
         fifth = next((t for t in ch.tones if t.label == "5"), None)
-        for extra in [root, fifth, root]:
+        # with a major 7th, a doubled root lands a semitone or b9 above it — double the 5th first
+        has_maj7 = any(t.label == "7" for t in chosen)
+        for extra in ([fifth, root] if has_maj7 and fifth is not None else [root, fifth, root]):
             if extra is not None and len(chosen) < voices:
                 chosen.append(extra)
     return chosen
@@ -682,6 +684,11 @@ def _shape_cost(ch: Chord, v: tuple[int, ...], style: dict, center: float, bass:
     return cost
 
 
+def _root_over_maj7(ch: Chord, v: tuple[int, ...]) -> bool:
+    sevens = [m for m in v if ch.tone_for_pc(m % 12).label == "7"]
+    return any(m - s in (1, 13) for s in sevens for m in v if ch.tone_for_pc(m % 12).label == "1")
+
+
 def candidate_voicings(ch: Chord, style: dict, voices: int | None = None, include_root: bool | None = None,
                        center: float | None = None, keep: int = 48,
                        force_pcs: set[int] | None = None,
@@ -689,6 +696,7 @@ def candidate_voicings(ch: Chord, style: dict, voices: int | None = None, includ
     voices = voices or style["voices"]
     include_root = style["root"] if include_root is None else include_root
     center = style["center"] if center is None else center
+    pinned = bool(force_pcs)  # a top-line note the user asked for
     if bass_bottom:
         include_root = True
         force_pcs = set(force_pcs or ()) | {ch.bass_pc}
@@ -710,7 +718,12 @@ def candidate_voicings(ch: Chord, style: dict, voices: int | None = None, includ
             continue
         cands.append((v, _shape_cost(ch, v, style, center, bass)))
     cands = sorted(set(cands), key=lambda c: c[1])
-    return cands[:keep]
+    # the root a semitone or b9 above a major 7th rubs against it; keep such voicings only as a last
+    # resort, or when a pinned top note asks for it (a melody on the root over Imaj7 is ordinary)
+    if pinned:
+        return cands[:keep]
+    clean = [c for c in cands if not _root_over_maj7(ch, c[0])]
+    return (clean or cands)[:keep]
 
 
 def voice_leading_cost(a: tuple[int, ...], b: tuple[int, ...]) -> float:
@@ -937,9 +950,11 @@ def guess_keys(chords: list[Chord], limit: int = 3) -> list[dict]:
 
     Heuristics (deliberately small; ties are reported as ambiguity, not hidden):
     first chord on the tonic +0.08; last chord on the tonic (unless it is a dominant
-    turnaround) +0.04; a V7 of the key present +0.03; dorian/mixolydian -0.06 so they
-    only win when the evidence for that centre is strong.
+    turnaround) +0.04; a V7 of the key present +0.03, or +0.08 when it resolves to the
+    tonic (loop wrap included); dorian/mixolydian -0.06 so they only win when the
+    evidence for that centre is strong.
     """
+    n = len(chords)
     out = []
     for tonic in range(12):
         for mode in ("major", "minor", "dorian", "mixolydian"):
@@ -956,6 +971,9 @@ def guess_keys(chords: list[Chord], limit: int = 3) -> list[dict]:
             if mode in ("major", "minor") and any(c.family == "dominant" and c.root.pc == (tonic + 7) % 12
                                                   for c in chords):
                 bonus += 0.03
+                if n > 1 and any(chords[i].family == "dominant" and chords[i].root.pc == (tonic + 7) % 12
+                                 and chords[(i + 1) % n].root.pc == tonic for i in range(n)):
+                    bonus += 0.05
             if mode in ("dorian", "mixolydian"):
                 bonus -= 0.06
             out.append({"key": f"{default_spelling(tonic, True)} {mode}", "fit": round(fit + bonus, 3),

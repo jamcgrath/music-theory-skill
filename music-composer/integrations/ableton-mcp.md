@@ -37,8 +37,8 @@ The skill works without any DAW connection. When an Ableton MCP server is availa
 ## 3. Reading existing material
 
 1. `get_session_snapshot` (or equivalent) for tempo, track names, devices — tells you which track is bass, keys, pads.
-2. Read notes with the clip-notes tool. Save the raw result to a JSON file in the working directory.
-3. Analyse: `python3 ${CLAUDE_SKILL_DIR}/scripts/mc.py notes clip.json` (it accepts the MCP's JSON as-is, including `{"result": "<json string>"}` wrappers and `start`/`start_time` keys). For a bass or melody clip add `--window 4`.
+2. Read notes with the clip-notes tool. Save the raw result to a JSON file in a temp dir (e.g. `/tmp/mc/clip.json`), not the user's project.
+3. Analyse: `python3 ${CLAUDE_SKILL_DIR}/scripts/mc.py notes /tmp/mc/clip.json` (it accepts the MCP's JSON as-is, including `{"result": "<json string>"}` wrappers and `start`/`start_time` keys). For a bass or melody clip add `--window 4`.
 4. For "what chords work with my bassline": also read the chord/keys clips if any; run the bassline procedure in `references/basslines.md`.
 5. Report what you found in musical terms (chords per bar, key candidates, ambiguities) before proposing changes.
 
@@ -49,7 +49,7 @@ The skill works without any DAW connection. When an Ableton MCP server is availa
 3. `create_clip(track, empty_slot, length_in_beats)` — length = the progression length (`clip.length_beats`).
 4. Write the notes into **that new clip only**.
 5. Name the clip after the idea and version: "A – Minor drift", "B – tritone turnaround".
-6. **Verify the round trip**: read the clip's notes back, save to JSON, run `mc.py validate back.json --chords "<progression>" --role chords` (or `--role bass|melody`). Report any mismatch.
+6. **Verify the round trip**: read the clip's notes back, save to `/tmp/mc/back.json`, run `mc.py validate /tmp/mc/back.json --chords "<progression>" --role chords` (or `--role bass|melody`). Report any mismatch.
 7. Tell the user where it is (track name, slot/scene number) and that nothing existing was changed. Mention if the track has no instrument loaded; load one only if asked.
 
 Separate parts (chords, bass, melody) go to separate clips/tracks so they can be muted and swapped independently.

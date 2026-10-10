@@ -77,6 +77,14 @@ def note_str(midi: int, ch: Chord | None = None) -> str:
     return f"{name}({midi})"
 
 
+def top_chord(cands: list[dict]) -> Chord | None:
+    """The best-ranked identify() reading, used to spell the notes it was read from."""
+    try:
+        return parse_chord(cands[0]["name"]) if cands else None
+    except TheoryError:
+        return None
+
+
 def conv_banner() -> str:
     return "Octaves: Ableton naming, C3 = MIDI 60" if CONV == "ableton" else "Octaves: scientific pitch, C4 = MIDI 60"
 
@@ -198,8 +206,9 @@ def cmd_identify(a):
         res = identify(midis, bass, limit=a.limit)
         if len(groups) > 1:
             lines.append(f"\n[{gi + 1}]")
-        lines.append("notes: " + " ".join(note_str(m) for m in sorted(midis))
-                     + (f"  bass: {note_str(bass)}" if bass is not None else ""))
+        top = top_chord(res)
+        lines.append("notes: " + " ".join(note_str(m, top) for m in sorted(midis))
+                     + (f"  bass: {note_str(bass, top)}" if bass is not None else ""))
         pcs = {m % 12 for m in midis} | ({bass % 12} if bass is not None else set())
         if len(pcs) < 3:
             s_ = sorted(set(midis) | ({bass} if bass is not None else set()))
@@ -284,7 +293,9 @@ def cmd_voice(a):
         if not chk["ok"]:
             raise TheoryError(f"internal check failed for {ch.name()}: {chk}")
         labels = [ch.tone_for_pc(m % 12).label for m in v]
-        warns = [w for w in chk["warnings"] if not w.startswith("rootless")]
+        # with --no-bass the lowest chord note *is* the bass, so the low-register warning doesn't apply
+        warns = [w for w in chk["warnings"]
+                 if not w.startswith("rootless") and not (a.no_bass and w.startswith("lowest chord note"))]
         if b is not None and b >= v[0]:
             warns.append("the bass note is at or above the chord's lowest note — lower the bass or raise the chords")
         row = {"chord": ch.name(), "start": t, "beats": beats, "midi": list(v),
@@ -458,7 +469,9 @@ def cmd_notes(a):
         rows.append(row)
         label = " / ".join(row["chords"]) or ("(interval: " + interval_name(pitches[-1] - pitches[0]) + ")"
                                              if len(pitches) == 2 else "(single note)" if len(pitches) == 1 else "-")
-        lines.append(f"  {s['start']:>6g}-{s['end']:<6g} " + " ".join(note_str(p) for p in pitches) + f"  -> {label}")
+        top = top_chord(cands)
+        lines.append(f"  {s['start']:>6g}-{s['end']:<6g} " + " ".join(note_str(p, top) for p in pitches)
+                     + f"  -> {label}")
     named = [parse_chord(r["chords"][0]) for r in rows if r["chords"]]
     harmonic = []
     if len(named) >= 2:
@@ -490,7 +503,10 @@ def classify(pitch: int, ch: Chord, role: str = "melody") -> tuple[str, str]:
         return "tension", AVAILABLE[ch.family][rel]
     if rel in AVOID.get(ch.family, {}):
         return "avoid", AVOID[ch.family][rel]
-    return "outside", DEGREE_NAMES[rel]
+    name = DEGREE_NAMES[rel]
+    if any(t.label in ("b" + name, "#" + name) for t in ch.tones):
+        name = "natural " + name  # e.g. A over Fm9 — not to be read as the chord's b3
+    return "outside", name
 
 
 ANTICIPATION = 0.5  # a chord change up to an 8th early counts as a push into the next chord
